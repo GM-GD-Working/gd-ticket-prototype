@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GD Ticket System — Interactive Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700&family=Google+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1017;--bg2:#141820;--bg3:#1a1f2e;--bg4:#222838;
+  --text:#e2e4eb;--text2:#959aad;--text3:#5f6477;
+  --blue:#4d8eff;--blue-bg:#142040;--blue-b:#264080;
+  --green:#34d399;--green-bg:#0c2a1e;--green-b:#1a4a38;
+  --amber:#f59e0b;--amber-bg:#2a1f0c;--amber-b:#4a3a1a;
+  --red:#ef4444;--red-bg:#2a1212;--red-b:#4a2020;
+  --purple:#a78bfa;--purple-bg:#1c1830;--purple-b:#302852;
+  --border:#252a3a;
+  --font:'DM Sans',-apple-system,sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.6}
+
+.top-bar{background:var(--bg2);border-bottom:0.5px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10}
+.top-bar .logo{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
+.top-bar .logo span{color:var(--blue)}
+.proto-badge{font-size:10px;font-weight:700;letter-spacing:0.8px;padding:3px 10px;border-radius:12px;background:var(--amber-bg);color:var(--amber);border:0.5px solid var(--amber-b)}
+
+.main{display:grid;grid-template-columns:340px 1fr;min-height:calc(100vh - 48px)}
+
+/* Form panel */
+.form-panel{background:var(--bg2);border-right:0.5px solid var(--border);padding:24px 20px;overflow-y:auto}
+.form-panel h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.form-panel .fd{font-size:11px;color:var(--text3);margin-bottom:20px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px;letter-spacing:0.3px}
+.fg select,.fg input,.fg textarea{width:100%;background:var(--bg3);border:0.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:border .2s}
+.fg select:focus,.fg input:focus,.fg textarea:focus{border-color:var(--blue)}
+.fg textarea{resize:vertical;min-height:60px}
+.fg select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%235f6477'%3E%3Cpath d='M2 4l4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.submit-btn{width:100%;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;margin-top:8px}
+.submit-btn:hover{background:#3a7ae8}
+.submit-btn:active{transform:scale(0.98)}
+.submit-btn:disabled{opacity:0.4;cursor:not-allowed}
+.sev-pills{display:flex;gap:6px}
+.sp{flex:1;padding:7px 0;text-align:center;font-size:11px;font-weight:600;border-radius:6px;cursor:pointer;border:0.5px solid var(--border);background:var(--bg3);transition:all .15s}
+.sp:hover{border-color:var(--text3)}
+.sp.active.low{background:var(--green-bg);border-color:var(--green-b);color:var(--green)}
+.sp.active.medium{background:var(--amber-bg);border-color:var(--amber-b);color:var(--amber)}
+.sp.active.high{background:rgba(251,146,60,0.15);border-color:rgba(251,146,60,0.4);color:#fb923c}
+.sp.active.highest{background:var(--red-bg);border-color:var(--red-b);color:var(--red)}
+
+/* Preview panel */
+.preview-panel{padding:24px;overflow-y:auto;max-height:calc(100vh - 48px)}
+.preview-panel h2{font-size:15px;font-weight:700;margin-bottom:4px}
+.preview-panel .pd{font-size:11px;color:var(--text3);margin-bottom:20px}
+
+.si{display:flex;gap:0;margin-bottom:20px;position:relative}
+.si::before{content:'';position:absolute;top:14px;left:0;right:0;height:1.5px;background:var(--border)}
+.si-s{flex:1;text-align:center;position:relative;padding-top:32px}
+.si-dot{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:var(--bg);transition:all .4s;z-index:1}
+.si-dot::after{content:'';width:8px;height:8px;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--border);transition:all .4s}
+.si-s.active .si-dot{border-color:var(--blue)}.si-s.active .si-dot::after{background:var(--blue)}
+.si-s.done .si-dot{border-color:var(--green);background:var(--green-bg)}.si-s.done .si-dot::after{background:var(--green)}
+.si-s .sl{font-size:10px;color:var(--text3);transition:color .3s}
+.si-s.active .sl{color:var(--blue);font-weight:600}
+.si-s.done .sl{color:var(--green)}
+
+.pbar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:20px}
+.pbar .bf{height:100%;border-radius:2px;transition:width .6s ease;width:0}
+
+.empty{text-align:center;padding:80px 20px;color:var(--text3)}
+.empty .ei{font-size:48px;margin-bottom:12px;opacity:0.3}
+
+.stl{display:flex;align-items:center;gap:8px;margin-bottom:8px;margin-top:16px}
+.stl .sn{font-size:10px;font-weight:700;letter-spacing:0.5px;padding:2px 8px;border-radius:6px}
+.stl .st{font-size:12px;font-weight:600}
+
+/* ===== GOOGLE CHAT LIGHT THEME MOCKUP ===== */
+.gc-win{background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden;margin-bottom:14px;opacity:0;transform:translateY(12px);transition:all .5s ease;font-family:'Google Sans','DM Sans',sans-serif}
+.gc-win.visible{opacity:1;transform:translateY(0)}
+.gc-top{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #e0e0e0;background:#fff}
+.gc-top-left{display:flex;align-items:center;gap:4px;font-size:12px;color:#5f6368}
+.gc-top-left .gc-you{color:#5f6368}
+.gc-top-left .gc-bot-name{color:#1a73e8;font-weight:500}
+.gc-top-left .gc-ts{color:#80868b;font-size:11px}
+.gc-body{padding:10px 14px;background:#fff}
+
+/* Chat bubble - light blue like screenshot */
+.gc-bubble{background:#d3e3fd;border-radius:12px;padding:12px 16px;margin-bottom:10px;max-width:95%;margin-left:auto;font-size:13px;color:#1f1f1f;line-height:1.7}
+.gc-bubble strong{font-weight:700;color:#1a1a1a}
+.gc-bubble .tnum{color:#b45309;font-weight:700}
+.gc-bubble .sev-highest{color:#dc2626}
+.gc-bubble .sev-high{color:#ea580c}
+.gc-bubble .sev-medium{color:#d97706}
+.gc-bubble .sev-low{color:#16a34a}
+
+/* Thread reply bubble */
+.gc-reply{background:#d3e3fd;border-radius:12px;padding:12px 16px;margin-bottom:10px;max-width:95%;margin-left:auto;font-size:13px;color:#1f1f1f;line-height:1.7}
+.gc-reply .mention{color:#1a73e8;font-weight:500;background:rgba(26,115,232,0.08);padding:2px 4px;border-radius:4px}
+
+/* Bottom bar */
+.gc-bottom{display:flex;align-items:center;gap:8px;padding:8px 14px;border-top:1px solid #e0e0e0;background:#fff}
+.gc-input{flex:1;background:#f1f3f4;border:none;border-radius:20px;padding:8px 14px;font-size:12px;color:#5f6368;font-family:'Google Sans','DM Sans',sans-serif}
+.gc-send{width:28px;height:28px;border-radius:50%;background:none;border:none;color:#80868b;font-size:16px;cursor:default;display:flex;align-items:center;justify-content:center}
+.gc-toolbar{display:flex;gap:12px;color:#5f6368;font-size:16px}
+.gc-toolbar span{cursor:default;opacity:0.6}
+
+/* ===== DM WINDOW (same light GChat style) ===== */
+.dm-win{background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden;max-width:460px;margin-bottom:14px;opacity:0;transform:translateY(12px);transition:all .5s ease;font-family:'Google Sans','DM Sans',sans-serif}
+.dm-win.visible{opacity:1;transform:translateY(0)}
+.dm-top{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #e0e0e0;background:#fff}
+.dm-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.dm-name{font-size:13px;font-weight:500;color:#1f1f1f}
+.dm-body{padding:10px 14px}
+.dm-bubble{background:#d3e3fd;border-radius:12px;padding:12px 16px;font-size:13px;color:#1f1f1f;line-height:1.7;max-width:90%;margin-left:auto}
+
+/* ===== GMAIL MOCKUP ===== */
+.gmail{background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:hidden;margin-bottom:14px;opacity:0;transform:translateY(12px);transition:all .5s ease;font-family:'Google Sans','DM Sans',sans-serif;color:#1f1f1f}
+.gmail.visible{opacity:1;transform:translateY(0)}
+.gmail-header{padding:16px 20px 12px;border-bottom:1px solid #e0e0e0}
+.gmail-subject{font-size:18px;font-weight:400;color:#1f1f1f;display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.gmail-tag{font-size:11px;font-weight:500;background:#ea8600;color:#fff;padding:2px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:4px}
+.gmail-tag .x{font-size:13px;cursor:default}
+.gmail-from{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+.gmail-avatar{width:36px;height:36px;border-radius:50%;overflow:hidden;flex-shrink:0}
+.gmail-avatar img{width:100%;height:100%;object-fit:cover}
+.gmail-avatar-placeholder{width:36px;height:36px;border-radius:50%;background:#1a73e8;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0}
+.gmail-sender{font-size:14px;font-weight:700;color:#1f1f1f}
+.gmail-to{font-size:12px;color:#5f6368}
+.gmail-date{font-size:12px;color:#5f6368;margin-left:auto;white-space:nowrap}
+.gmail-icons{display:flex;gap:16px;margin-left:12px;color:#5f6368;font-size:16px}
+.gmail-icons span{cursor:default;opacity:0.5}
+.gmail-body{padding:16px 20px 20px;font-size:14px;line-height:1.8;color:#3c4043;white-space:pre-line}
+.gmail-body .gb-ticket{font-weight:600}
+.gmail-footer{padding:12px 20px;border-top:1px solid #e0e0e0;display:flex;gap:8px}
+.gmail-btn{padding:6px 16px;border-radius:18px;border:1px solid #dadce0;background:#fff;font-size:12px;color:#3c4043;font-family:'Google Sans','DM Sans',sans-serif;cursor:default;display:flex;align-items:center;gap:6px}
+.gmail-btn .arr{font-size:14px}
+
+/* Result banner */
+.result-banner{text-align:center;padding:16px;margin-top:12px;background:var(--green-bg);border-radius:10px;border:0.5px solid var(--green-b);opacity:0;transform:translateY(12px);transition:all .5s ease}
+.result-banner.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:800px){
+  .main{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .form-panel{border-right:none;border-bottom:0.5px solid var(--border)}
+  .preview-panel{max-height:none}
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="logo"><span>GD</span> Ticket System</div>
+  <div class="proto-badge">INTERACTIVE PROTOTYPE</div>
+</div>
+
+<div class="main">
+  <div class="form-panel">
+    <h2>Submit a ticket</h2>
+    <div class="fd">Fill in the form and click Submit to see the full ticket flow in action.</div>
+
+    <div class="fg">
+      <label>Department</label>
+      <select id="dept" onchange="onDeptChange()">
+        <option value="">Select department...</option>
+        <option value="ua">UA</option>
+        <option value="engineering">Engineering</option>
+        <option value="qa">QA</option>
+        <option value="creative">Creative</option>
+        <option value="product">Product</option>
+        <option value="finance">Finance</option>
+        <option value="ops">Ops</option>
+      </select>
+    </div>
+    <div class="fg"><label>Your name</label><input type="text" id="name" placeholder="e.g. Hadi Durrani"/></div>
+    <div class="fg"><label>Your email</label><input type="email" id="email" placeholder="e.g. abdulhadi@gamedistrict.co"/></div>
+    <div class="fg" id="teamG"><label>Team</label><input type="text" id="team" placeholder="e.g. GD Main"/></div>
+    <div class="fg" id="gameG"><label>Game title</label><input type="text" id="game" placeholder="e.g. Arrow"/></div>
+    <div class="fg">
+      <label>Issue type</label>
+      <select id="itype">
+        <option value="Bug">Bug</option>
+        <option value="Request Feature">Request Feature</option>
+        <option value="Access Issue">Access Issue</option>
+        <option value="Asset Request">Asset Request</option>
+        <option value="Question">Question</option>
+      </select>
+    </div>
+    <div class="fg" id="platG">
+      <label>Platform</label>
+      <select id="platform"><option value="Android">Android</option><option value="iOS">iOS</option><option value="Both">Both</option><option value="N/A">N/A</option></select>
+    </div>
+    <div class="fg"><label>Issue title</label><input type="text" id="title" placeholder="Short summary"/></div>
+    <div class="fg"><label>Description</label><textarea id="desc" placeholder="Describe the issue..."></textarea></div>
+    <div class="fg">
+      <label>Severity</label>
+      <div class="sev-pills">
+        <div class="sp low" onclick="setSev(this,'Low')">Low</div>
+        <div class="sp medium" onclick="setSev(this,'Medium')">Medium</div>
+        <div class="sp high" onclick="setSev(this,'High')">High</div>
+        <div class="sp highest active highest" onclick="setSev(this,'Highest')">Highest</div>
+      </div>
+    </div>
+    <button class="submit-btn" id="submitBtn" onclick="submitTicket()">Submit ticket</button>
+  </div>
+
+  <div class="preview-panel" id="previewPanel">
+    <h2>Live preview</h2>
+    <div class="pd">See exactly how the system processes your ticket</div>
+    <div class="si" id="stepInd">
+      <div class="si-s" id="s1"><div class="si-dot"></div><div class="sl">Post ticket</div></div>
+      <div class="si-s" id="s2"><div class="si-dot"></div><div class="sl">Tag team</div></div>
+      <div class="si-s" id="s3"><div class="si-dot"></div><div class="sl">DM reporter</div></div>
+      <div class="si-s" id="s4"><div class="si-dot"></div><div class="sl">Send email</div></div>
+    </div>
+    <div class="pbar"><div class="bf" id="barFill"></div></div>
+    <div id="pc">
+      <div class="empty"><div class="ei">📋</div><p>Fill in the form and click Submit<br>to see the ticket flow in action</p></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var severity='Highest';
+var DC={
+  ua:{space:'GD-UA Team',prefix:'GD-UA',leads:['@UA Lead','@UA Manager'],color:'#1967d2',showTeam:false,showGame:true,showPlat:false,emailTeam:'GameDistrict UA Team',emailTag:'UA Issues'},
+  engineering:{space:'GD-Core Tech Team',prefix:'GD-ENG',leads:['@Uzair Hassan','@Ahmed Farooq','@Ahmad Raza'],color:'#0d904f',showTeam:true,showGame:true,showPlat:true,emailTeam:'GameDistrict Engineering Team',emailTag:'Engineering Issues'},
+  qa:{space:'GD-QA Team',prefix:'GD-QA',leads:['@QA Lead','@QA Manager'],color:'#9334e6',showTeam:true,showGame:true,showPlat:true,emailTeam:'GameDistrict QA Team',emailTag:'QA Issues'},
+  creative:{space:'GD-Creative Team',prefix:'GD-CRT',leads:['@Creative Lead','@Art Director'],color:'#e8710a',showTeam:false,showGame:false,showPlat:false,emailTeam:'GameDistrict Creative Team',emailTag:'Creative Issues'},
+  product:{space:'GD-Product Team',prefix:'GD-PRD',leads:['@Product Manager','@Product Lead'],color:'#1a73e8',showTeam:false,showGame:true,showPlat:false,emailTeam:'GameDistrict Product Team',emailTag:'Product Issues'},
+  finance:{space:'GD-Finance Team',prefix:'GD-FIN',leads:['@Finance Manager','@Accounts Lead'],color:'#d93025',showTeam:false,showGame:false,showPlat:false,emailTeam:'GameDistrict Finance Team',emailTag:'Finance Issues'},
+  ops:{space:'GD-Ops Team',prefix:'GD-OPS',leads:['@Ops Manager','@Admin Lead'],color:'#188038',showTeam:false,showGame:false,showPlat:false,emailTeam:'GameDistrict Ops Team',emailTag:'Ops Issues'}
+};
+
+function onDeptChange(){
+  var d=document.getElementById('dept').value;var c=DC[d]||{};
+  document.getElementById('teamG').style.display=c.showTeam?'block':'none';
+  document.getElementById('gameG').style.display=c.showGame?'block':'none';
+  document.getElementById('platG').style.display=c.showPlat?'block':'none';
+}
+function setSev(el,v){severity=v;document.querySelectorAll('.sp').forEach(function(p){p.classList.remove('active')});el.classList.add('active')}
+function sevClass(s){if(s==='Highest')return'sev-highest';if(s==='High')return'sev-high';if(s==='Medium')return'sev-medium';return'sev-low'}
+function sevEmoji(s){if(s==='Highest')return'🔴';if(s==='High')return'🟠';if(s==='Medium')return'🟡';return'🟢'}
+
+function submitTicket(){
+  var dept=document.getElementById('dept').value;
+  if(!dept){alert('Please select a department');return}
+  var nm=document.getElementById('name').value||'Hadi Durrani';
+  var em=document.getElementById('email').value||'abdulhadi@gamedistrict.co';
+  var tm=document.getElementById('team').value||'GD Main';
+  var gm=document.getElementById('game').value||'Arrow';
+  var it=document.getElementById('itype').value;
+  var pl=document.getElementById('platform').value;
+  var ti=document.getElementById('title').value||'Automation';
+  var ds=document.getElementById('desc').value||'Please';
+  var c=DC[dept];
+  var tn=c.prefix+'-'+Math.random().toString(36).substr(2,8).toUpperCase();
+  var now=new Date();
+  var ts=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  var dateStr=now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+
+  var btn=document.getElementById('submitBtn');btn.disabled=true;btn.textContent='Processing...';
+  ['s1','s2','s3','s4'].forEach(function(id){document.getElementById(id).className='si-s'});
+  var bar=document.getElementById('barFill');bar.style.width='0%';bar.style.background='var(--blue)';
+  var pc=document.getElementById('pc');pc.innerHTML='';
+
+  var teamLine=c.showTeam?'<strong>Team:</strong> '+tm+'\n':'';
+  var gameLine=c.showGame?'<strong>Game Title:</strong> '+gm+'\n':'';
+  var platLine=c.showPlat?'<strong>Issue Platform:</strong> '+pl+'\n':'';
+  var emUser=em.split('@')[0];
+
+  // STEP 1: Post ticket
+  setTimeout(function(){
+    document.getElementById('s1').className='si-s active';bar.style.width='25%';
+    var h='<div class="stl"><span class="sn" style="background:var(--blue-bg);color:var(--blue)">STEP 1</span><span class="st" style="color:var(--blue)">Ticket posted to '+c.space+'</span></div>';
+    h+='<div class="gc-win" id="gw1">';
+    h+='<div class="gc-top"><div class="gc-top-left"><span class="gc-you">You</span>&nbsp;&nbsp;<span class="gc-bot-name">GD Ticket Bot</span>&nbsp;&nbsp;<span class="gc-ts">'+ts+'</span></div></div>';
+    h+='<div class="gc-body">';
+    h+='<div class="gc-bubble">🎫 <strong>Ticket Number:</strong> <span class="tnum">'+tn+'</span>\n\n📌 <strong>New Issue Report Submitted</strong>\n\n<strong>Submitted By:</strong> '+nm+'\n<strong>Reporter Email:</strong> '+em+'\n'+teamLine+gameLine+'<strong>Issue Type:</strong> '+it+'\n'+platLine+'<strong>Issue Title:</strong> '+ti+'\n<strong>Issue Description:</strong>\n'+ds+'\n<strong>Attachments / Links:</strong>\n<strong>Severity:</strong> <span class="'+sevClass(severity)+'">'+severity+'</span>\n<strong>*Monetization SDK:*</strong> No*</div>';
+    h+='</div>';
+    h+='<div class="gc-bottom"><span style="font-size:18px;color:#5f6368;cursor:default">+</span><input class="gc-input" placeholder="Message '+c.space+'" disabled/><div class="gc-toolbar"><span>🅰</span><span>😊</span><span>📎</span><span>⬆</span><span>◉</span></div><div class="gc-send">▶</div></div>';
+    h+='</div>';
+    pc.innerHTML+=h;
+    setTimeout(function(){document.getElementById('gw1').classList.add('visible')},50);
+  },600);
+
+  // STEP 2: Thread reply
+  setTimeout(function(){
+    document.getElementById('s1').className='si-s done';document.getElementById('s2').className='si-s active';bar.style.width='50%';
+    var mentions=c.leads.map(function(l){return'<span class="mention" style="color:#1a73e8;font-weight:500;background:rgba(26,115,232,0.08);padding:2px 6px;border-radius:4px">'+l+'</span>'}).join('&nbsp;&nbsp;');
+    var gameRef=c.showGame?(gm+(c.showTeam?' ('+tm+')':'')):(c.showTeam?tm:'General');
+    var h='<div class="stl"><span class="sn" style="background:var(--green-bg);color:var(--green)">STEP 2</span><span class="st" style="color:var(--green)">Thread reply — team tagged</span></div>';
+    h+='<div class="gc-win" id="gw2" style="margin-left:16px">';
+    h+='<div class="gc-body">';
+    h+='<div class="gc-reply">🚨 <strong>New Ticket Assigned — <span style="color:#b45309">'+tn+'</span></strong>\n\n'+mentions+'\n\n📋 <strong>Game:</strong> '+gameRef+'\n🐛 <strong>Issue:</strong> '+ti+'\n'+sevEmoji(severity)+' <strong>Severity:</strong> <span class="'+sevClass(severity)+'">'+severity+'</span>\n👤 <strong>Reported by:</strong> '+nm+'\n\nPlease review and take action. Full details above ☝️</div>';
+    h+='</div></div>';
+    pc.innerHTML+=h;
+    setTimeout(function(){document.getElementById('gw2').classList.add('visible')},50);
+  },1600);
+
+  // STEP 3: DM
+  setTimeout(function(){
+    document.getElementById('s2').className='si-s done';document.getElementById('s3').className='si-s active';bar.style.width='75%';
+    var h='<div class="stl"><span class="sn" style="background:var(--amber-bg);color:var(--amber)">STEP 3</span><span class="st" style="color:var(--amber)">Personal DM to '+nm+'</span></div>';
+    h+='<div class="dm-win" id="gw3">';
+    h+='<div class="dm-top"><div class="dm-av" style="background:'+c.color+'">GD</div><div class="dm-name">GD Ticket Bot</div></div>';
+    h+='<div class="dm-body"><div class="dm-bubble">Assalamoalikum '+nm+'\nHow are you\n\nWe have received your ticket <strong><span style="color:#b45309">'+tn+'</span></strong>. Our team will review it and contact you soon.\n\nIf you have any additional details or logs to share, feel free to reply here.</div></div>';
+    h+='</div>';
+    pc.innerHTML+=h;
+    setTimeout(function(){document.getElementById('gw3').classList.add('visible')},50);
+  },2600);
+
+  // STEP 4: Email (Gmail style)
+  setTimeout(function(){
+    document.getElementById('s3').className='si-s done';document.getElementById('s4').className='si-s active';bar.style.width='100%';
+    var h='<div class="stl"><span class="sn" style="background:var(--purple-bg);color:var(--purple)">STEP 4</span><span class="st" style="color:var(--purple)">Email confirmation sent</span></div>';
+    h+='<div class="gmail" id="gw4">';
+    h+='<div class="gmail-header">';
+    h+='<div class="gmail-subject">Issue Received – Ticket '+tn+' <span class="gmail-tag">'+c.emailTag+' <span class="x">×</span></span></div>';
+    h+='<div class="gmail-from" style="display:flex;align-items:flex-start;gap:10px">';
+    h+='<div class="gmail-avatar-placeholder">G</div>';
+    h+='<div style="flex:1"><div style="display:flex;align-items:center"><span class="gmail-sender">GameDistrict Support</span><span class="gmail-date" style="margin-left:auto">'+dateStr+'</span><div class="gmail-icons"><span>☆</span><span>😊</span><span>↩</span><span>⋮</span></div></div>';
+    h+='<div class="gmail-to">to '+emUser+', ahmadraza, uzairhassan, me ▾</div></div></div>';
+    h+='</div>';
+    h+='<div class="gmail-body">Hello,\n\nThank you for submitting your issue.\n\nWe have successfully received your request.\n\n🎫 Ticket Number: <span class="gb-ticket">'+tn+'</span>\n\n📌 Issue Details:\n'+(c.showTeam?'Team: '+tm+'\n':'')+(c.showGame?'Game Title: '+gm+'\n':'')+'Issue Type: '+it+'\n'+(c.showPlat?'Issue Platform: '+pl+'\n':'')+'Issue Title: '+ti+'\n\nIssue Description:\n'+ds+'\n\nAttachments / Links:\n\nSeverity:\n'+severity+'\n\nOur team is reviewing your request and will contact you shortly.\n\nPlease keep this ticket number for future reference.\n\nBest regards,\n'+c.emailTeam+'</div>';
+    h+='<div class="gmail-footer"><div class="gmail-btn"><span class="arr">↩</span> Reply</div><div class="gmail-btn"><span class="arr">↩↩</span> Reply all</div><div class="gmail-btn"><span class="arr">↪</span> Forward</div><div class="gmail-btn">😊</div></div>';
+    h+='</div>';
+    pc.innerHTML+=h;
+    setTimeout(function(){document.getElementById('gw4').classList.add('visible')},50);
+  },3600);
+
+  // Done
+  setTimeout(function(){
+    document.getElementById('s4').className='si-s done';bar.style.background='var(--green)';
+    var h='<div class="result-banner" id="gw5"><div style="font-size:14px;font-weight:700;color:var(--green);margin-bottom:2px">Ticket fully processed</div><div style="font-size:11px;color:var(--text2)">All 4 actions completed. Reporter notified via Chat DM + email. Team tagged and aware.</div></div>';
+    pc.innerHTML+=h;
+    setTimeout(function(){document.getElementById('gw5').classList.add('visible')},50);
+    btn.disabled=false;btn.textContent='Submit another ticket';
+  },4400);
+}
+</script>
+</body>
+</html>
